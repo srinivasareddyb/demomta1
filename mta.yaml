@@ -3,7 +3,7 @@ ID: demomta
 version: 0.0.1
 modules:
 - name: demomta-destination-content
-  type: com.sap.application.contents     
+  type: com.sap.application.content     
   requires:
   - name: demomta-destination-service
     parameters:
