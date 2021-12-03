@@ -1,0 +1,92 @@
+_schema-version: "3.2"
+ID: demomta
+version: 0.0.1
+modules:
+- name: demomta-destination-content
+  type: com.sap.application.contents     
+  requires:
+  - name: demomta-destination-service
+    parameters:
+      content-target: true
+  - name: demomta_html_repo_host
+    parameters:
+      service-key:
+        name: demomta_html_repo_host-key
+  - name: uaa_demomta
+    parameters:
+      service-key:
+        name: uaa_demomta-key
+  parameters:
+    content:
+      instance:
+        destinations:
+        - Name: demomta_demomta_html_repo_host
+          ServiceInstanceName: demomta-html5-app-host-service
+          ServiceKeyName: demomta_html_repo_host-key
+          sap.cloud.service: demomta
+        - Authentication: OAuth2UserTokenExchange
+          Name: demomta_uaa_demomta
+          ServiceInstanceName: demomta-xsuaa-service
+          ServiceKeyName: uaa_demomta-key
+          sap.cloud.service: demomta
+        existing_destinations_policy: ignore
+  build-parameters:
+    no-source: true
+- name: demomta-app-content
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: demomta_html_repo_host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - ui.zip
+      name: ui
+      target-path: resources/
+- name: ui
+  type: html5
+  path: ui
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+resources:
+- name: demomta-destination-service
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      init_data:
+        instance:
+          destinations:
+          - Authentication: NoAuthentication
+            Name: ui5
+            ProxyType: Internet
+            Type: HTTP
+            URL: https://ui5.sap.com
+          existing_destinations_policy: update
+      version: 1.0.0
+    service: destination
+    service-name: demomta-destination-service
+    service-plan: lite
+- name: demomta_html_repo_host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: demomta-html5-app-host-service
+    service-plan: app-host
+- name: uaa_demomta
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: demomta-xsuaa-service
+    service-plan: application
+parameters:
+  deploy_mode: html5-repo
